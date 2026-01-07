@@ -14,9 +14,21 @@ final public class FigmaClient: BaseClient {
     public init(
         accessToken: String,
         timeout: TimeInterval?,
-        retryConfiguration: RetryConfiguration = .default
+        retryConfiguration: RetryConfiguration = .default,
+        requestDelay: TimeInterval? = nil
     ) {
-        self.retryConfiguration = retryConfiguration
+        // If requestDelay is explicitly provided, override the configuration value
+        if let requestDelay = requestDelay {
+            self.retryConfiguration = RetryConfiguration(
+                maxRetries: retryConfiguration.maxRetries,
+                maxRetryAfterSeconds: retryConfiguration.maxRetryAfterSeconds,
+                initialBackoffSeconds: retryConfiguration.initialBackoffSeconds,
+                backoffMultiplier: retryConfiguration.backoffMultiplier,
+                requestDelaySeconds: requestDelay
+            )
+        } else {
+            self.retryConfiguration = retryConfiguration
+        }
         let config = URLSessionConfiguration.ephemeral
         config.httpAdditionalHeaders = ["X-Figma-Token": accessToken]
         config.timeoutIntervalForRequest = timeout ?? 30

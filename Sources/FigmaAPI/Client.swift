@@ -87,7 +87,13 @@ public class BaseClient: Client {
 
         for attempt in 0..<configuration.maxRetries {
             do {
-                return try request(endpoint)
+                let result = try request(endpoint)
+                // Delay after successful request to prevent hitting rate limits on subsequent calls
+                if configuration.requestDelaySeconds > 0 {
+                    logger.info("Throttling: waiting \(String(format: "%.1f", configuration.requestDelaySeconds))s before next request")
+                    sleep(forTimeInterval: configuration.requestDelaySeconds)
+                }
+                return result
             } catch let error as RateLimitError {
                 switch error {
                 case .rateLimited(let retryAfter):
