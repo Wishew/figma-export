@@ -97,13 +97,13 @@ public class BaseClient: Client {
                     }
 
                     logger.warning("Rate limited by Figma API. Waiting \(Int(retryAfter))s before retry \(attempt + 1)/\(configuration.maxRetries)")
-                    Thread.sleep(forTimeInterval: retryAfter)
+                    sleep(forTimeInterval: retryAfter)
                     lastError = error
 
                 case .timeout:
                     // Exponential backoff for timeout
                     logger.warning("Request timed out. Waiting \(Int(currentBackoff))s before retry \(attempt + 1)/\(configuration.maxRetries)")
-                    Thread.sleep(forTimeInterval: currentBackoff)
+                    sleep(forTimeInterval: currentBackoff)
                     currentBackoff *= configuration.backoffMultiplier
                     lastError = error
 
@@ -137,4 +137,16 @@ private extension URLSessionTask {
         }
     }
 
+}
+
+/// Sleeps for the specified interval while keeping the RunLoop responsive.
+/// Uses RunLoop when possible to process pending callbacks, with Thread.sleep
+/// fallback when RunLoop has no active sources (prevents immediate return).
+private func sleep(forTimeInterval interval: TimeInterval) {
+    let limitDate = Date(timeIntervalSinceNow: interval)
+    while Date() < limitDate {
+        if !RunLoop.current.run(mode: .default, before: limitDate) {
+            Thread.sleep(forTimeInterval: 0.1)
+        }
+    }
 }
