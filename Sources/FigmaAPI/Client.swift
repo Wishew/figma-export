@@ -148,11 +148,16 @@ private extension URLSessionTask {
 /// Sleeps for the specified interval while keeping the RunLoop responsive.
 /// Uses RunLoop when possible to process pending callbacks, with Thread.sleep
 /// fallback when RunLoop has no active sources (prevents immediate return).
+/// On Linux, uses Thread.sleep directly as RunLoop behavior differs.
 private func sleep(forTimeInterval interval: TimeInterval) {
+    #if os(Linux)
+    Thread.sleep(forTimeInterval: interval)
+    #else
     let limitDate = Date(timeIntervalSinceNow: interval)
     while Date() < limitDate {
         if !RunLoop.current.run(mode: .default, before: limitDate) {
             Thread.sleep(forTimeInterval: 0.1)
         }
     }
+    #endif
 }
