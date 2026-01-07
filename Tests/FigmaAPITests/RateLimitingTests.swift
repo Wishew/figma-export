@@ -3,6 +3,9 @@
 
 import XCTest
 import Foundation
+#if os(Linux)
+import FoundationNetworking
+#endif
 @testable import FigmaAPI
 
 final class RateLimitingTests: XCTestCase {
@@ -62,13 +65,20 @@ final class RateLimitingTests: XCTestCase {
             maxRetries: 5,
             maxRetryAfterSeconds: 600,
             initialBackoffSeconds: 2.0,
-            backoffMultiplier: 3.0
+            backoffMultiplier: 3.0,
+            requestDelaySeconds: 0.5
         )
 
         XCTAssertEqual(config.maxRetries, 5)
         XCTAssertEqual(config.maxRetryAfterSeconds, 600)
         XCTAssertEqual(config.initialBackoffSeconds, 2.0)
         XCTAssertEqual(config.backoffMultiplier, 3.0)
+        XCTAssertEqual(config.requestDelaySeconds, 0.5)
+    }
+
+    func testDefaultConfigurationHasZeroRequestDelay() {
+        let config = RetryConfiguration.default
+        XCTAssertEqual(config.requestDelaySeconds, 0)
     }
 
     // MARK: - Retry-After Header Parsing Tests
